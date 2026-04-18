@@ -369,6 +369,35 @@ describe("registerPluginCliCommands", () => {
     expect(mocks.memoryListAction).toHaveBeenCalledTimes(1);
   });
 
+  it("preloads the selected memory slot alongside wiki primary commands", async () => {
+    const program = createProgram();
+    program.exitOverride();
+    mocks.resolveManifestActivationPluginIds.mockReturnValue(["memory-wiki"]);
+
+    await registerPluginCliCommands(
+      program,
+      {
+        plugins: {
+          slots: {
+            memory: "memory-lancedb-pro",
+          },
+        },
+      } as OpenClawConfig,
+      undefined,
+      undefined,
+      {
+        mode: "lazy",
+        primary: "wiki",
+      },
+    );
+
+    expect(mocks.loadOpenClawPlugins).toHaveBeenCalledWith(
+      expect.objectContaining({
+        onlyPluginIds: ["memory-wiki", "memory-lancedb-pro"],
+      }),
+    );
+  });
+
   it("keeps full CLI loading when primary command planning finds no plugin match", async () => {
     const program = createProgram();
     program.exitOverride();

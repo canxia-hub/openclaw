@@ -1,6 +1,7 @@
 import { collectUniqueCommandDescriptors } from "../cli/program/command-descriptor-utils.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { resolveManifestActivationPluginIds } from "./activation-planner.js";
+import { normalizePluginsConfig } from "./config-state.js";
 import type { PluginLoadOptions } from "./loader.js";
 import { loadOpenClawPluginCliRegistry, loadOpenClawPlugins } from "./loader.js";
 import type { PluginRegistry } from "./registry.js";
@@ -59,6 +60,23 @@ function buildPluginCliLoaderParams(
   });
 }
 
+function resolvePrimaryCommandCompanionPluginIds(
+  context: PluginCliLoadContext,
+  primaryCommandPluginIds: readonly string[],
+): string[] {
+  const resolvedPluginIds = new Set(primaryCommandPluginIds);
+  if (!resolvedPluginIds.has("memory-wiki")) {
+    return [...resolvedPluginIds];
+  }
+
+  const selectedMemoryPluginId = normalizePluginsConfig(context.config.plugins).slots.memory;
+  if (selectedMemoryPluginId && selectedMemoryPluginId.toLowerCase() !== "none") {
+    resolvedPluginIds.add(selectedMemoryPluginId);
+  }
+
+  return [...resolvedPluginIds];
+}
+
 function resolvePrimaryCommandPluginIds(
   context: PluginCliLoadContext,
   primaryCommand: string | undefined,
@@ -67,7 +85,7 @@ function resolvePrimaryCommandPluginIds(
   if (!normalizedPrimary) {
     return [];
   }
-  return resolveManifestActivationPluginIds({
+  const primaryCommandPluginIds = resolveManifestActivationPluginIds({
     trigger: {
       kind: "command",
       command: normalizedPrimary,
@@ -76,6 +94,7 @@ function resolvePrimaryCommandPluginIds(
     workspaceDir: context.workspaceDir,
     env: context.env,
   });
+  return resolvePrimaryCommandCompanionPluginIds(context, primaryCommandPluginIds);
 }
 
 export function resolvePluginCliLoadContext(params: {
