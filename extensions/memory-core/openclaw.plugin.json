@@ -3,6 +3,9 @@
   "kind": "memory",
   "commandAliases": [
     {
+      "name": "memory"
+    },
+    {
       "name": "dreaming",
       "kind": "runtime-slash",
       "cliCommand": "memory"
